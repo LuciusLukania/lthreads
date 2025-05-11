@@ -1,4 +1,8 @@
 #include "lthread.h"
+#include "lthread_list.h"
+#include "lthread_scheluder.h"
+#include <stdlib.h>
+#include <unistd.h>
 
 /**
  * @brief Initialise lthread struct
@@ -43,11 +47,15 @@ static lthread_t* init()
         deinit(lt);
         return NULL;
     }
+    lt->next = NULL;
     return lt;
 }
 
+// FIXME: int will overflow
 int lthread_create(void (*func)(void))
 {
+    static uint64_t lthread_cnt = 0;
+
     lthread_t* lt = init();
     if (!lt) {
         return -1;
@@ -62,5 +70,14 @@ int lthread_create(void (*func)(void))
     lt->context->uc_stack.ss_size = LTHREAD_STACK_SIZE;
     lt->context->uc_link = NULL;
     makecontext(lt->context, func, 0);
+
+    lthread_list_add(lt);
+    lt->ltid = lthread_cnt++;
+    return lt->ltid;
+}
+
+int lthread_start(void)
+{
+    lthread_scheluder_start();
     return 0;
 }

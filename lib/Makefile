@@ -1,6 +1,10 @@
 $(info "$(BUILD_DIR)")
-LTHREAD_LIB=$(BUILD_DIR)/lthread.a
+LTHREAD_LIB=$(BUILD_DIR)/liblthread.a
 SRC_DIR= .
+
+ifeq ($(DEBUG), 1)
+	CFLAGS += -g
+endif
 
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRC))
