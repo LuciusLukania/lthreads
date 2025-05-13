@@ -38,6 +38,7 @@ int lthread_create(void (*func)(void));
  * @return Status, if negative - failed
  */
 int lthread_start(void);
+void lthread_sleep(double sec);
 
 // TODO: exit, kill i sleep
 int lthread_exit(void);

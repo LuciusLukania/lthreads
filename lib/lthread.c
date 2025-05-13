@@ -2,6 +2,7 @@
 #include "lthread_list.h"
 #include "lthread_scheluder.h"
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 /**
@@ -80,4 +81,14 @@ int lthread_start(void)
 {
     lthread_scheluder_start();
     return 0;
+}
+
+void lthread_sleep(double sec)
+{
+    clock_t start = clock();
+    clock_t current = start;
+
+    while (((double)(current - start) / CLOCKS_PER_SEC) < sec) {
+        current = clock();
+    }
 }
