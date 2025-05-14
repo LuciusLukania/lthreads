@@ -2,16 +2,23 @@
 #define H_LTHREAD
 
 #include <stdint.h>
+#include <stdio.h>
 #include <ucontext.h>
 
 #define LTHREAD_STACK_SIZE 65536
 #define LTHREAD_SCHED_INTERVAL_US 100000
+#define LTHREAD_FUNC_PROLOGE_SIZE 32
+
+#ifdef DEBUG
+#define DBG(x) x
+#else
+#define DBG(x)
+#endif
 
 typedef enum {
   LTHREAD_STATE_IDLE,
   LTHREAD_STATE_RUNNING,
-  LTHREAD_STATE_STOP,
-  LTHREAD_STATE_EXIT
+  LTHREAD_STATE_EXITING
 } ltread_state_t;
 
 typedef struct lthread {
@@ -20,6 +27,8 @@ typedef struct lthread {
   ucontext_t *context;
   uint8_t *stack;
   struct lthread *next;
+  struct lthread *prev;
+  void (*destroy_handler)(struct lthread *);
 } lthread_t;
 
 /**
@@ -38,9 +47,20 @@ int lthread_create(void (*func)(void));
  * @return Status, if negative - failed
  */
 int lthread_start(void);
+/**
+ * @brief Sleep for seconds.
+ *
+ * @param sec seconds.
+ */
 void lthread_sleep(double sec);
 
-// TODO: exit, kill i sleep
+/**
+ * @brief Exit thread.
+ *
+ * Invoked from thread fn, removes it from sheduler.
+ *
+ * @return 0 if success -1 if fail.
+ */
 int lthread_exit(void);
 int lthread_kill(void);
 

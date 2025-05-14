@@ -3,7 +3,7 @@ LTHREAD_LIB=$(BUILD_DIR)/liblthread.a
 SRC_DIR= .
 
 ifeq ($(DEBUG), 1)
-	CFLAGS += -g
+	CFLAGS += -g -DDEBUG
 endif
 
 SRC = $(wildcard $(SRC_DIR)/*.c)

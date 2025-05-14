@@ -1,18 +1,20 @@
 #include "lthread.h"
 #include "lthread_list.h"
 #include "lthread_scheluder.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <sys/ucontext.h>
 /**
  * @brief Initialise lthread struct
  *
  * @return NULL if fail lthread pointer if success.
  */
-static lthread_t* init();
+static lthread_t* create();
 
-static void deinit(lthread_t* lt)
+static void destroy(lthread_t* lt)
 {
     if (!lt) {
         return;
@@ -26,11 +28,9 @@ static void deinit(lthread_t* lt)
     }
 
     free(lt);
-
-    lt = NULL;
 }
 
-static lthread_t* init()
+static lthread_t* create()
 {
     lthread_t* lt = (lthread_t*)malloc(sizeof(lthread_t));
     if (!lt) {
@@ -39,16 +39,15 @@ static lthread_t* init()
 
     lt->stack = (uint8_t*)malloc(sizeof(uint8_t) * LTHREAD_STACK_SIZE);
     if (!lt->stack) {
-        deinit(lt);
+        destroy(lt);
         return NULL;
     }
 
     lt->context = (ucontext_t*)malloc(sizeof(ucontext_t));
     if (!lt->context) {
-        deinit(lt);
+        destroy(lt);
         return NULL;
     }
-    lt->next = NULL;
     return lt;
 }
 
@@ -57,13 +56,13 @@ int lthread_create(void (*func)(void))
 {
     static uint64_t lthread_cnt = 0;
 
-    lthread_t* lt = init();
+    lthread_t* lt = create();
     if (!lt) {
         return -1;
     }
 
     if (getcontext(lt->context) == -1) {
-        deinit(lt);
+        destroy(lt);
         return -1;
     }
 
@@ -72,8 +71,16 @@ int lthread_create(void (*func)(void))
     lt->context->uc_link = NULL;
     makecontext(lt->context, func, 0);
 
+    lt->next = NULL;
+    lt->prev = NULL;
+
+    lt->state = LTHREAD_STATE_IDLE;
+    lt->destroy_handler = &destroy;
+
     lthread_list_add(lt);
+
     lt->ltid = lthread_cnt++;
+
     return lt->ltid;
 }
 
@@ -83,6 +90,19 @@ int lthread_start(void)
     return 0;
 }
 
+int lthread_exit(void)
+{
+
+    lthread_t* lt = lthread_sheluder_get_active();
+    lt->state = LTHREAD_STATE_EXITING;
+    DBG(printf("ltid: %d exiting\n", lt->ltid));
+
+    while (1) {
+        // wait for exit
+    }
+    return 0;
+}
+//
 void lthread_sleep(double sec)
 {
     clock_t start = clock();

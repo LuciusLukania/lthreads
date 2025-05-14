@@ -1,7 +1,7 @@
 SRC = main.c
 
 APP_BIN=$(BUILD_DIR)/lthreads_app
-CFLAGS+=-I../lib
+CFLAGS +=-I../lib
 LIB+=$(BUILD_DIR)/liblthread.a
 
 ifeq ($(DEBUG), 1)
